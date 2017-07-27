@@ -1,6 +1,9 @@
-import click
-
 import csv
+
+# for dummy benchmarking vstup.info response time
+import time
+
+import click
 import urllib.request as urllib2
 from bs4 import BeautifulSoup
 
@@ -9,13 +12,12 @@ def prepare(url):
     request = urllib2.Request(url)
     request.add_header('Accept-Encoding', 'utf-8')
     response = urllib2.urlopen(request)
-    global soup
     soup = BeautifulSoup(response, 'html.parser')
     print(soup.find(class_="title-description").parent)
+    return soup
 
 
-def process():
-    global soup
+def process(soup):
     try:
         table = soup.find_all('table')[3]
     except IndexError:
@@ -36,7 +38,6 @@ def process():
     for row in rows:
         cols = row.find_all('td')
         cols = [ele.text.strip() for ele in cols]
-        score = cols[3]
         try:
             p = int(cols[2])
         except ValueError:
@@ -74,16 +75,13 @@ def process():
 @click.command()
 @click.option('--url', prompt='Enter vstup.info rating url')
 def main(url):
-    # for dummy benchmarking vstup.info response time
-    import time
-
     start = time.time()
-    prepare(url)
+    soup = prepare(url)
     end = time.time()
     print("prepare: " + str(end - start))
 
     start = time.time()
-    process()
+    process(soup)
     end = time.time()
     print("process: " + str(end - start))
 
